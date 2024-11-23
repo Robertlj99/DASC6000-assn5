@@ -1,0 +1,231 @@
+---
+title: "DASC 6000 Written Assignment 05: Continuous Probability Distributions"
+author: "Fall 2024"
+date: today
+date-format: long
+number-sections: true
+number-depth: 3
+format:
+  html:
+    toc: true
+    toc-location: right
+    number-sections: true
+    number-depth: 3
+    html-math-method: katex
+    embed-resources: true
+    self-contained: true
+# bibliography: dasc-6000.bib 
+# csl: ieee-with-url.csl
+# linkcolor: red
+# urlcolor: blue
+# link-citations: yes
+# header-includes:
+#   - \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+---
+
+
+# Assignment Goal {.unnumbered}
+
+The overarching goal for this assignment is to assess your understanding of continuous probability distributions.
+
+# Instructions {.unnumbered}
+
+Please show all your work. Simply providing the final answer is treated as no response. If you do not use R or Python notebooks, it is okay. Please preserve the document structure if you choose to use Microsoft Word or something else. Please number your responses to match with the corresponding questions.
+
+**Please submit your response as a self-contained HTML or PDF document**. 
+
+
+
+
+# Expected Value of a Continuous Random Variable
+
+Let $X \sim U(2,9)$. Find $\mathbb{E}[X - \lfloor X \rfloor]$.
+
+Let $\bar{X} = [X - \lfloor X \rfloor]$, we know that $\bar{X} \sim U(0,1)$ now we simply have to find the midpoint
+$$E[X- \lfloor X \rfloor] = \frac{0+1}{2} = \frac{1}{2}$$
+
+
+
+# A Continuous Random Variable
+
+A stick of length $a$ is broken at a random point that is equally likely along the length of the stick. What is the probability that the longer piece is more than twice as long as the shorter piece? Hint: Let the random variable X denote the position where the break occurs. Next, compute its CDF and use it to compute the required probability.
+
+After breaking the stick we will have two sticks, one of length $X$ and one of length $a - X$. Our condition that we need to meet is $\text{max}(X,a-X) > 2 \cdot \text{min}(X,a-X)$. Logically there are only two possible cases for the location of X that can satisfy the condition, either if X is up to 1/3 of a, or it is 2/3 or more of a. Mathematically speaking this is $X \in [0, \frac{a}{3}) \cup (\frac{2a}{3},a]$, note that 0 and a are exlcusive (X cannot be them). Since the length of each interval is equal to $\frac{a}{3}$ and $X$ is uniformly distributed our probability function is given as
+$$P(\text{max}(X,a-X) > 2 \cdot \text{min}(X,a-X)) = \frac{\frac{a}{3} + \frac{a}{3}}{a} = \frac{2}{3}$$
+```{r}
+set.seed(6000) # For DASC:6000 :)
+a <- 1 # Stick length
+n <- 10000 # Number of simulations
+count <- 0
+for(i in 1:n) {
+  x <- runif(1,0,a)
+  y <- min(x,a-x) # Length of the shorter piece
+  z <- max(x,a-x) # Length of the longer piece
+  if (z > 2 * y) { # Check if condition is met
+    count <- count + 1
+  }
+}
+
+ep <- count / n # Estimated probability
+print(paste("Probability that the longer piece is more than twice as long as the shorter piece =", ep))
+```
+
+
+# Exponential Distribution
+
+A box contains the following six flashlights:
+
+- There is one Type 1 flashlight with an exponential(1) lifetime.
+- There are two Type 2 flashlights with exponential ( $1 / 2$ ) lifetimes.
+- There are three Type 3 flashlight with exponential $(1 / 3)$ lifetimes.
+
+You select a flashlight at random from the box.
+
+(a) What is the probability that the flashlight selected lasts more than 4 hours? **Hint:** Let $X_1, X_1$ and $X_1$ be three random variables corresponding to Type 1, Type 2, and Type 3 flashlights. The time to failure of the flashlight selected is a mixture of $X_1$, $X_1$ and $X_1$. Begin with the CDF of $X$.
+
+The probability of selecting a type 1 flashlight = 1/6, a type 2 flashlight = 1/3, and a type 3 flashlight = 1/2. The probability the selected flashlight lasts more than 4 hours for a type 1 flashlight = $e^{-4}$, a type 2 = $e^{-2}$, and a type 3 = $e^{-\frac{4}{3}}$. The probability of the question then would be the sum of the probability of picking a flashlight times its probability of making it for each individual flashlight.
+
+```{r}
+# Probability of picking each flashlight
+p1 <- 1/6
+p2 <- 1/3
+p3 <- 1/2
+
+# Survival probability for each flashlight
+s1 <- exp(-1 * 4)
+s2 <- exp(-(1/2) * 4)
+s3 <- exp(-(1/3) * 4)
+
+p <- (p1 * s1) + (p2 * s2) + (p3 * s3)
+print(paste("Probability of part a =", p))
+```
+
+(b) Given that the flashlight lasts more than 4 hours, what is the probability that it is a Type 3 flashlight? **Hint:** Use the Rule of Bayes.
+
+We want $P(\text{Type 3} | X > 4)$, Bayes' rule tells us that 
+$$P(\text{Type 3} | X > 4) = \frac{P(X > 4 | \text{Type 3})P(\text{Type 3})}{P(X > 4)}$$
+
+```{r}
+p2 <- (s3 * p3) / p
+print(paste("Probability of part b =", p2))
+```
+
+
+# Another Exponential Distribution
+
+A fast food restaurant has two servers and a single line. The service time is exponentially distributed with a population mean of one minute. Both servers are busy right now and there are three people waiting in line. When Susan arrives to the shop, she joins the end of the line. Assume that service begins immediately upon the departure of a customer.
+
+(a) What is the probability density function of Susan's waiting time in line? **Hint:** Consider the Erlang distribution.
+
+In our case there are 3 exponential phases (so $k=3$) and the rate of distribution is 1 minute (so $\lambda = 1$) substituting these values into the Erlang distribution formula and simplifying gives us the PDF (note, 2! equals 2 but I left that in for clarirty that its Erlang)
+$$f_T(t) = \frac{t^2e^{-t}}{2!}, \ t \geq 0$$
+
+(b) What is the probability that Susan will wait in line for more than three minutes? **Hint:** Use the PDF from (a) above.
+
+This is calculated by finding the complement of the cdf $F_T(t)$ for the distribution above
+$$F_T(3) = 1 - \sum_{i=0}^2 \frac{3^ie^{-3}}{i!}$$
+$$P(T>3) = 1 - F_T(3)$$
+```{r}
+lambda <- 1
+k <- 3
+t <- 3
+csum <- 0
+for(i in 0:(k-1)) {
+  csum <- csum + (((lambda * t)^i * exp(-lambda * t)) / factorial(i))
+}
+cdf <- 1 - csum
+p <- 1 - cdf
+print(paste("Probability =", p))
+```
+
+# Normal Approximation to the Binomial Distribution
+
+A fair die is tossed 1000 times.
+
+(a) Find the expected number of threes.
+
+The probability of rolling a three = $\frac{1}{6}$, let $X$ denote the number of times a three is rolled, we know that $X$ will follow a binomial distribution: $X \sim \text{Binom}(n = 1000, p = \frac{1}{6})$, the expected values, $E$, is calculated as $E[X] = n \cdot p$
+```{r}
+ev <- 1000 * (1/6)
+print(paste("Expected Values =", ev))
+```
+
+(b) Find the probability of 200 or fewer threes exactly and by using the normal approximation to the binomial distribution.
+
+This is calculated by computing the binomial CDF, which I will do using R
+```{r}
+n <- 1000
+p <- 1/6
+k <- 200
+pr <- pbinom(k, size = n, prob = p) #I hope you dont take off points for lazy names
+print(paste("Exact Probability =", pr))
+
+mu <- n * p
+sigma <- sqrt(n * p * (1-p))
+kn <- 200.5
+pn <- pnorm(kn, mean=mu, sd=sigma)
+print(paste("Normal Approximation =", pn))
+```
+(c) Find the probability of 200 or fewer threes exactly and by using the normal approximation to the binomial distribution given that there were exactly 500 even numbers that appeared in the 1000 tosses.
+
+Given there are 500 even rolls we thus have 500 odd rolls that could be a 3. Given there are three possible outcomes (1,3,5) there is a $\frac{1}{3}$ chance that any odd roll is a 3 and our binomial distribution for $X$ now looks like $X \sim \text{Binom}(n = 500, p = \frac{1}{3})$
+```{r}
+n <- 500
+p <- 1/3
+k <- 200
+pr <- pbinom(k, size=n, prob=p)
+print(paste("Probability =", pr))
+
+mu <- n * p
+sigma <- sqrt(n * p * (1-p))
+kn <- 200.5
+pn <- pnorm(kn, mean=mu, sd=sigma)
+print(paste("Normal Approximation =", pn))
+```
+
+# Another Continuous Random Variable
+
+Let $X$ be a continuous random variable with probability density function
+
+$$
+f(x) = a x + b, \quad 0<x<1
+$$
+
+where $a$ and $b$ are parameters.
+
+## (a) What conditions are required for the parameters $a$ and $b$?
+
+In order for $f(x)$ to be a valid PDF it must satisfy two conditions:
+
+1. It must be non-negative for all $x \in (0,1)$, aka 
+$$f(x) = ax + b \geq 0, \  \ 0 < x < 1$$
+Given this condition we can derive two different conclusions about $a$ and $b$:
+
+- at $x = 0$: $f(0) = b \geq 0$, because $a \cdot 0 = 0$ and the equation must be non negative, thus $b$ must be non negative
+- at $x = 1$: $f(1) = a + b \geq 0 \rightarrow a \geq -b$, because $a \cdot 1 = a$ and the same rules applies, thus $a + b$ must be non negative meaning that $a$ must be greater than or equal to $-b$
+
+  Therefore our non-negativity conditions are $b \geq 0$ and $a \geq -b$
+
+2. The total are under the PDF must equal 1, aka
+$$\int_0^1(ax + b)dx = 1$$
+To find the values of $a$ and $b$ that satisfy the condition we evaluate the integral (I'm going to skip typing out the full evaluation)
+$$
+\int_0^1(ax + b)dx = \frac{a}{2} + b = 1
+$$
+$$
+\frac{a}{2} +b = 1 \rightarrow a + 2b = 2
+$$
+And thus our normalization condition is $a + 2b = 2$
+
+## (b) Name two special cases of this distribution associated with particular settings of the parameters $a$ and $b$ which coincide with common continuous parametric distributions.
+
+1. The most obvious is the uniform distribution with a PDF given by $f(x) = 1, \ 0 < x < 1$
+
+- In order to get this distribution we need $ax + b = 1$, given that $a +2b = 2$ setting $a = 0$ and $b = 1$ satisfies this condition and yields the uniform distribution.
+
+2. Triangular distribution given by $f(x) = 2x$ for linearly increasing and $f(x) = 2 - 2x$ for linearly decreasing distributions
+
+- Increasing can easily be achieved with $a = 2$ and $b = 0$, while satisfying all conditions
+- Decreasing can be achieved with $a = -2$ and $b = 2$, notice $a \geq -b$ is still satisfied
+
+
